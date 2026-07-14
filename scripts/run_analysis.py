@@ -15,9 +15,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from lobsig.data import load_day
-from lobsig.features import build_dataset
-from lobsig.evaluate import walk_forward, pooled_r2
+from lob.data import load_day
+from lob.features import build_dataset
+from lob.evaluate import walk_forward, pooled_r2
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 DATA = os.path.join(ROOT, "data")

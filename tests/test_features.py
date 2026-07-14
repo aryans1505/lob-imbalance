@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from lobsig.features import (event_ofi, queue_imbalance, signed_trade_flow,
-                             build_dataset)
+from lob.features import (event_ofi, queue_imbalance, signed_trade_flow,
+                          build_dataset)
 
 
 def test_ofi_hand_computed_sequence():
