@@ -1,7 +1,7 @@
-"""Event-level microstructure features and time-binned aggregation.
+"""Event-level order-book features, binned in time.
 
-All features at bin t use information from events with time <= the bin's right
-edge only; targets are built strictly from later bin edges (see build_dataset).
+Features at bin t only use events up to the bin's right edge; targets come
+from later bin edges.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import pandas as pd
 
 def event_ofi(bid_p: np.ndarray, bid_s: np.ndarray,
               ask_p: np.ndarray, ask_s: np.ndarray) -> np.ndarray:
-    """Best-level order-flow imbalance of Cont, Kukanov & Stoikov (2014).
+    """Best-level order-flow imbalance (OFI).
 
     e_n =  1{P_b(n) >= P_b(n-1)} q_b(n) - 1{P_b(n) <= P_b(n-1)} q_b(n-1)
          - 1{P_a(n) <= P_a(n-1)} q_a(n) + 1{P_a(n) >= P_a(n-1)} q_a(n-1)
@@ -36,7 +36,6 @@ def queue_imbalance(bid_s: np.ndarray, ask_s: np.ndarray) -> np.ndarray:
 
 
 def depth_imbalance(book: pd.DataFrame, levels: int) -> np.ndarray:
-    """Multi-level size imbalance over the top `levels` levels, in [-1, 1]."""
     bid = sum(book[f"bid_s{i}"].to_numpy() for i in range(1, levels + 1))
     ask = sum(book[f"ask_s{i}"].to_numpy() for i in range(1, levels + 1))
     return queue_imbalance(bid, ask)
@@ -44,10 +43,10 @@ def depth_imbalance(book: pd.DataFrame, levels: int) -> np.ndarray:
 
 def signed_trade_flow(msg_type: np.ndarray, msg_size: np.ndarray,
                       msg_direction: np.ndarray) -> np.ndarray:
-    """Signed executed volume per event; + = buyer-initiated.
+    """Signed executed volume per event, + = buyer-initiated.
 
-    LOBSTER direction on executions is the resting order's side, so the
-    aggressor sign is -direction.
+    LOBSTER tags executions with the resting order's side, so the aggressor
+    sign is -direction.
     """
     is_exec = np.isin(msg_type, (4, 5))
     return np.where(is_exec, -msg_direction * msg_size, 0.0)
@@ -58,13 +57,12 @@ def build_dataset(book: pd.DataFrame,
                   horizons=(1, 2, 5, 10, 30, 60),
                   depth_levels: int = 5,
                   trim_seconds: float = 300.0) -> pd.DataFrame:
-    """Aggregate event stream into a time-binned feature/target table.
+    """Turn the event stream into a one-row-per-bin feature/target table.
 
-    Flow features (OFI, trade flow) are summed within each bin; state features
-    (queue imbalance, depth imbalance, spread) are the last value in the bin.
-    Target ret_{h} is the mid-price log-return (in bps) from the end of bin t
-    to the end of bin t+h. The first/last `trim_seconds` of the session are
-    dropped (auction effects), as are the tail bins lacking a full horizon.
+    Flows (ofi, tflow) are summed per bin, state (qi, depth_imb, spread) is
+    last-in-bin. ret_h is the mid log-return in bps from the end of bin t to
+    the end of bin t+h. The first/last trim_seconds go (auction weirdness),
+    and so do tail bins with no full horizon.
     """
     t = book["time"].to_numpy()
     bid_p = book["bid_p1"].to_numpy()

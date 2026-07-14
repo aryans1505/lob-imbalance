@@ -1,8 +1,4 @@
-"""End-to-end analysis: load LOBSTER day, build features, walk-forward evaluate.
-
-Usage: python scripts/run_analysis.py
-Writes results/metrics.csv, results/signal_decay.png, prints a summary table.
-"""
+"""Load the LOBSTER day, build the features, run the walk-forward, write results/."""
 import os
 import sys
 

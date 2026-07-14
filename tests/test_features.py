@@ -66,7 +66,7 @@ def _toy_book(n_events: int = 4000, seed: int = 1) -> pd.DataFrame:
 
 
 def test_no_lookahead_in_features():
-    """Features for early bins must be identical whether or not later events exist."""
+    # features for early bins shouldn't change when later events are deleted
     book = _toy_book()
     full = build_dataset(book, bin_seconds=1.0, horizons=(1,), depth_levels=5,
                          trim_seconds=60.0)
@@ -80,8 +80,8 @@ def test_no_lookahead_in_features():
                                   truncated.loc[common, feature_cols])
 
 
-def test_target_is_strictly_forward_looking():
-    """ret_h at bin t must equal the mid log-return from bin edge t to t+h."""
+def test_target_is_forward_looking():
+    # ret_h at bin t = mid log-return from bin edge t to t+h
     book = _toy_book()
     df = build_dataset(book, bin_seconds=1.0, horizons=(5,), depth_levels=5,
                        trim_seconds=60.0)

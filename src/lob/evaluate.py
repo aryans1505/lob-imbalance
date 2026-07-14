@@ -1,9 +1,7 @@
-"""Walk-forward evaluation of linear predictive models on binned LOB features.
+"""Walk-forward OLS on the binned features.
 
-Contiguous, chronological folds; train on fold i, test on fold i+1. Feature
-standardisation is fit on the training fold only. Out-of-sample R^2 uses the
-training-set mean as the benchmark forecast (Campbell-Thompson convention), so
-a model with no genuine signal scores <= 0.
+Chronological folds: train on fold i, test on fold i+1, standardisation fit
+on the training fold only.
 """
 from __future__ import annotations
 
@@ -62,9 +60,8 @@ def walk_forward(df: pd.DataFrame, feature_cols: list[str], target_col: str,
 
 
 def pooled_r2(df: pd.DataFrame, preds: pd.Series, target_col: str) -> float:
-    """Pooled OOS R^2 over all test folds vs the unconditional-zero benchmark
-    being the pooled training means is impractical across folds, so we use the
-    simple and stricter zero-forecast benchmark here (returns have ~0 mean)."""
+    """Pooled OOS R^2 against a zero forecast (1s returns have ~0 mean, and
+    zero is stricter than per-fold training means)."""
     y = df.loc[preds.index, target_col].to_numpy()
     yhat = preds.to_numpy()
     sst = np.sum(y ** 2)
