@@ -21,8 +21,11 @@ prices come as integers in units of 1e-4 USD).
 
 Targets are forward mid-price log-returns in bps over 1/2/5/10/30/60 s, measured
 bin edge to bin edge so they never overlap the feature window. Evaluation is 12
-chronological folds: fit OLS on fold i, test on fold i+1, standardisation fit on
-the training fold only. R² is pooled over all test folds against a zero forecast.
+chronological folds with an expanding window: fit OLS on folds 1..i, test on
+fold i+1, standardisation fit on the training data only. Per-fold and pooled R²
+use the same zero-forecast benchmark. (An earlier version trained on one fold
+at a time and mixed two R² benchmarks; the expanding window is more stable at
+the long horizons and the tables below reflect it.)
 
 ## Results
 
@@ -30,17 +33,22 @@ Pooled out-of-sample R² of the full feature set, by horizon:
 
 | horizon | MSFT | INTC | AMZN |
 |---|---|---|---|
-| 1s  | 2.3% | 1.6% | −0.7% |
-| 2s  | 3.4% | 2.7% | −0.7% |
-| 5s  | 4.1% | 3.9% | −2.2% |
-| 10s | 1.8% | 3.1% | −3.5% |
-| 30s | −4.6% | −4.2% | −6.9% |
-| 60s | −13.2% | −13.8% | −10.0% |
+| 1s  | 3.0% | 1.8% | 1.3% |
+| 2s  | 4.4% | 2.7% | 1.1% |
+| 5s  | 6.0% | 4.5% | −0.1% |
+| 10s | 5.0% | 4.5% | −0.4% |
+| 30s | 1.1% | 1.0% | −1.5% |
+| 60s | −3.2% | −4.0% | −1.9% |
 
-The signal peaks around 5s (R² ~4%, prediction-target correlation ~0.23) and is
-gone by 30s. It's a large-tick thing: MSFT and INTC trade with the spread pinned
-at one tick (~3-4 bps) and show it, while AMZN (5.4 bps median spread, thinner
-book) shows nothing under the same model.
+Pooled numbers hide a lot of fold-to-fold noise on one day of data, so the
+per-fold range matters: at 5s the fold R² runs −0.5% to +9.5% for MSFT, −3.6%
+to +9.8% for INTC, −7.7% to +2.1% for AMZN (full ranges in
+`results/metrics.csv`).
+
+The signal peaks around 5s (R² ~5-6%, prediction-target correlation ~0.24-0.26)
+in the large-tick names and is near zero by 30-60s. MSFT and INTC trade with
+the spread pinned at one tick (~3-4 bps) and show it; small-tick AMZN (5.4 bps
+median spread, thinner book) shows a little at 1-2s and nothing from 5s on.
 
 Two things I didn't expect going in. OFI on its own doesn't predict at these
 horizons (R² ~0) — the Cont et al. result is about contemporaneous impact, not
@@ -48,8 +56,9 @@ forecasting; the ablation in `metrics.csv` shows the difference. The
 forward-looking part comes mostly from queue and depth imbalance.
 
 And there's no tradeable edge: where R² is positive, the predicted move beats
-half the spread in under 1% of bins. Crossing the spread on this loses money.
-If it's useful anywhere it's in quoting or execution timing.
+half the spread in well under 1% of bins, so crossing the spread on this loses
+money. Whether it survives inside a quoting or execution model is untested
+here — that would need queue-position and fill modelling this repo doesn't do.
 
 Per-fold ranges and the OFI-only ablation are in `results/metrics.csv`; decay
 plot in `results/signal_decay.png`.
