@@ -2,5 +2,3 @@ data/
 __pycache__/
 *.pyc
 .pytest_cache/
-WALKTHROUGH.md
-.ipynb_checkpoints/
