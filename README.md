@@ -78,7 +78,7 @@ either; "tradeable" above just means beating the half-spread.
 To run:
 
 ```
-pip install -r requirements.txt
-python -m pytest tests -q
+pip install -e .[dev]
+python -m pytest -q
 python scripts/run_analysis.py
 ```
